@@ -1,0 +1,178 @@
+# Nome:       Daniel Almeida Luz
+# Matrícula:  13/0007714
+#
+# Sistema operacional: Debian 8 (Jessie)
+# gcc version:         4.9.2
+# CUnit version:       2.1-3
+
+Implementação das funções de load e store do MIPS.
+
+Detalhes dos diretórios
+=====
+raiz:
+  Arquivo Makefile para facilitar a compilação, e script para rodar os testes
+gerados pelo CUnit.
+  Arquivos:
+    - Makefile
+    - run_tests
+
+src:
+  Diretório com o fonte da implementação das funções e fonte principal para
+leitura dos arquivos binários gerados pelo MIPS para comparação da leitura
+correta da área de ".text" e ".data".
+  Arquivos:
+    - memfunctions.c
+    - t1_mips_simulator.c
+
+headers:
+  Diretório contendo o header do arquivo de implementação das funções. Esse
+arquivo contém alguns defines necessários para o funcionamento das funções.
+  Arquivos:
+    - memfunctions.h
+
+test:
+  Diretório com as implementações dos testes automatizados, usados para
+certificar o correto funcionamento das funções. Os testes feitos serão
+detalhados mais a frente.
+  Arquivos:
+    - loadTests.c (Arquivo com os testes das funções de load)
+    - loadTests.h
+    - storeTests.c (Arquivo com os testes das funções de store) 
+    - storeTests.h
+    - t1_mips_simulator_test.c (Arquivo de testes principal)
+    - CUnit/ (Diretório com os códigos CUnit necessários para execução dos
+      testes)
+
+mars:
+  Diretório com os arquivos .asm e .bin gerados pelo MIPS a partir do exemplo
+dado na especificação do trabalho.
+  Arquivos:
+    - t1.asm
+    - data.bin
+    - text.bin
+
+Executando
+=====
+Toda a execução foi automatizada via Makefile para facilitar a correção. O
+arquivo Make possui 2 principais targets:
+- main: compila o programa "t1_mips_simulator", presente na pasta "src/". Gera o
+  executável na própria pasta raiz do trabalho.
+- tests: compila os tests CUnit, já fazendo o link com os código-objeto
+  presentes em "test/CUnit". Também gera o executável na própria pasta raiz do
+  trabalho.
+
+main
+-----
+Uma vez executada a target "main", pode-se executar o programa com
+./t1_mips_simulator, que lerá os binários(data.bin e text.bin) no diretório
+"mars" e colocará a saída da área de ".text" e ".data" na tela, para comparação
+com o gerado pelo MIPS.
+
+tests
+-----
+Executada a target tests, pode-se executá-los com o script bash "./run_tests"
+presente no diretório raiz (certifique-se de o script está executável com
+`sudo chmod +x run_tests`).
+
+Detalhamento dos testes
+=====
+Os testes foram divididos em duas suítes: load e store.
+
+load
+-----
+loadByteTest - Testa a função "lb".
+  Detalhes:
+    Populada a área inicial de dados com o valor 0x04030201. A seguir executada
+a função com 4 deslocamentos diferentes para assegurar que o retorno se dá
+corretamente.
+    Deslocamento | Retorno
+    0              0x00000001
+    1              0x00000002
+    2              0x00000003
+    3              0x00000004
+
+loadByteUnsignedTest- Testa a função "lbu".
+  Detalhes:
+    Populada a área inicial de dados com o valor 0x00000080. A seguir executada
+a função com 1 deslocamento, comparando o retorno com os valores carregados no
+próprio MIPS e com a função "lb" para a verificação da propagação do bit mais
+significativo.
+    Deslocamento | Retorno "lb" | Retorno "lbu"
+    0              0xffffff80     0x00000080
+
+loadHalfWordTest - Testa a função "lh".
+  Detalhes: (similar a função loadByte)
+    Populada a área inicial de dados com o valor 0x04030201. A seguir executada
+a função com 4 deslocamentos diferentes para assegurar que o retorno se dá
+corretamente, para os retornos não múltiplos de 2, a função retorna NULL, pois
+ela não faz a leitura da memória de forma desalinhada.
+    Deslocamento | Retorno
+    0              0x00000201
+    1              NULL
+    2              0x00000403
+    3              NULL
+
+loadHalfWordUnsignedTest- Testa a função "lhu".
+  Detalhes: (similar a função loadByteUnsigned)
+    Populada a área inicial de dados com o valor 0x0000ffff. A seguir executada
+a função com 1 deslocamento, comparando o retorno com os valores carregados no
+próprio MIPS e com a função "lh" para a verificação da propagação do bit mais
+significativo.
+    Deslocamento | Retorno "lh" | Retorno "lhu"
+    0              0xffffffff     0x0000ffff
+
+loadWordTest - Testa a função "lw".
+  Detalhes:
+    Populada a área inicial de dados com o valor 0x04030201, e a área seguinte
+com 0x0f0f0f0f. A seguir executada a função com 5 deslocamentos diferentes para 
+assegurar que o retorno se dá corretamente, para os retornos não múltiplos de 4, 
+a função retorna NULL, pois ela não faz a leitura da memória de forma desalinhada.
+O quinto deslocamento é para a verificação que a palavra lida foi do endereço
+seguinte.
+    Deslocamento | Retorno
+    0              0x04030201
+    1              NULL
+    2              NULL
+    3              NULL
+    4              0x0f0f0f0f
+
+store
+-----
+storeByteTest - Testa a função "sb".
+  Detalhes:
+    Usando um valor base 0x0a, é feito o store byte com esse valor e verificado
+que o endereço no vetor de memória foi alterado da maneira correta. Feitos 3
+deslocamentos, os 2 primeiros para a mesma posição de palavra, em bytes
+diferentes, o terceiro com a constante passando para o endereço seguinte de
+palavra.
+    Deslocamento    |   Valor salvo
+    0                   0x0000000a
+    1                   0x00000a0a
+    4(palavra seguinte) 0x0000000a
+
+storeHalfWordTest - Testa a função "sh".
+  Detalhes:
+    Usando um valor base 0xffff, e um valor para os testes desalinhados 0xaaaa,
+é entao feito o store halfword com esse valor e verificado que o endereço no
+vetor de memória foi alterado da maneira correta. Para os casos de deslocamento
+desalinhado, é usado outro valor e checado que a alteração não foi feita. 
+    Deslocamento    |   Valor salvo
+    0                   0x0000ffff
+    1(desalinhado)      0x0000ffff
+    2                   0xffffffff
+    3(desalinhado)      0xffffffff
+    4(palavra seguinte) 0x0000ffff
+
+storeWordTest - Testa a função "sw".
+  Detalhes:
+    Usando um valor base 0xffffffff, e um valor para os testes desalinhados
+0xaaaaaaaa, é entao feito o store word com esse valor e verificado que o
+endereço no vetor de memória foi alterado da maneira correta. Para os casos de
+deslocamento desalinhado, é usado outro valor e checado que a alteração não foi
+feita. 
+    Deslocamento    |   Valor salvo
+    0                   0xffffffff
+    1(desalinhado)      0xffffffff
+    2(desalinhado)      0xffffffff
+    3(desalinhado)      0xffffffff
+    4(palavra seguinte) 0xffffffff
