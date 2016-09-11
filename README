@@ -78,7 +78,7 @@ Detalhamento dos testes
 =====
 Os testes foram divididos em duas suítes: load e store.
 
-load
+Suíte de load - loadTests.c
 -----
 loadByteTest - Testa a função "lb".
   Detalhes:
@@ -136,7 +136,7 @@ seguinte.
     3              NULL
     4              0x0f0f0f0f
 
-store
+Suíte de store - storeTests.c
 -----
 storeByteTest - Testa a função "sb".
   Detalhes:
