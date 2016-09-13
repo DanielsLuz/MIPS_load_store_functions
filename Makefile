@@ -17,7 +17,7 @@ tests: memfunctions
 
 all: main tests
 
-debug:	main test
+debug:	main tests
 
 debug:	CFLAGS=-g
 
